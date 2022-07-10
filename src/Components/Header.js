@@ -1,49 +1,100 @@
 import styled from "styled-components";
+import { useDispatch , useSelector } from "react-redux/es/exports";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { auth } from "../firebase";
 import { provider } from "../firebase";
+import { selectUserName , selectUserEmail , selectUserPhoto, setUserLoginDetails, setSignOutState } from "../Features/User/userSlice";
 
 const Header = (props) => {
 
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const username = useSelector(selectUserName);
+    const userphoto = useSelector(selectUserPhoto);
+
+    useEffect( ()=> {
+        auth.onAuthStateChanged( async(user)=> {
+            if( user ){
+                setUser(user);
+                navigate("/home");
+            }
+        })
+    }, [username] );
+
     const handleAuth = () => {
-        auth.signInWithPopup(provider).then( (result)=>{
-            console.log(result);
-        }).catch( (error) => {
-            alert(error.message);
-        });
+        if( !username ){
+            auth.signInWithPopup(provider).then( (result)=>{
+                setUser(result.user);
+                console.log(result.user);
+            }).catch( (error) => {
+                alert(error.message);
+            });
+        }
+        else{
+            auth.signOut().then(()=> {
+                dispatch(setSignOutState());
+                navigate("/");
+            }).catch( (error)=> {
+                alert(error.message);
+            })
+        }
     };  
+
+    const setUser = (user) => {
+        dispatch(
+            setUserLoginDetails({
+                name: user.displayName,
+                email: user.email,
+                photo: user.photoURL,
+            })
+        );
+    };
 
     return (
         <Nav>
             <Logo>
                 <img src = "../Images/logo.svg" />
             </Logo>
-            <NavMenu>
-                <a href = "/home">
-                    <img src="/images/home-icon.svg" />
-                    <span>HOME</span>
-                </a>
-                <a>
-                    <img src="/images/search-icon.svg" />
-                    <span>SEARCH</span>
-                </a>
-                <a>
-                    <img src="/images/watchlist-icon.svg" />
-                    <span>WATCHLIST</span>
-                </a>
-                <a>
-                    <img src="/images/original-icon.svg" />
-                    <span>ORIGINALS</span>
-                </a>
-                <a>
-                    <img src="/images/movie-icon.svg" />
-                    <span>MOVIES</span>
-                </a>
-                <a>
-                    <img src="/images/series-icon.svg" />
-                    <span>SERIES</span>
-                </a>
-            </NavMenu>
-            <Login onClick={handleAuth}>Login</Login>
+
+            {
+                !username ? 
+                ( <Login onClick={handleAuth}>Login</Login> ) : 
+                (<>
+                <NavMenu>
+                    <a href = "/home">
+                        <img src="/images/home-icon.svg" />
+                        <span>HOME</span>
+                    </a>
+                    <a>
+                        <img src="/images/search-icon.svg" />
+                        <span>SEARCH</span>
+                    </a>
+                    <a>
+                        <img src="/images/watchlist-icon.svg" />
+                        <span>WATCHLIST</span>
+                    </a>
+                    <a>
+                        <img src="/images/original-icon.svg" />
+                        <span>ORIGINALS</span>
+                    </a>
+                    <a>
+                        <img src="/images/movie-icon.svg" />
+                        <span>MOVIES</span>
+                    </a>
+                    <a>
+                        <img src="/images/series-icon.svg" />
+                        <span>SERIES</span>
+                    </a>
+                </NavMenu>
+                <Signout>
+                    <UserImg src = {userphoto} alt={username} />
+                    <DropDown>
+                        <span onClick={handleAuth}>Sign Out</span>
+                    </DropDown>
+                </Signout>
+                </>)
+            }
         </Nav>
     )
 };
@@ -156,6 +207,48 @@ const Login = styled.a`
         background-color: #f9f9f9;
         color: #000;
         border-color: transparent;
+    }
+`;
+
+const UserImg = styled.img`
+    height : 100%;
+`;
+
+const DropDown = styled.div`
+    position: absolute;
+    top : 48px;
+    right: 0px;
+    background: rgb(19,19,19);
+    border: 1px solid rgba(151,151,151,0.34);
+    border-radius: 4px;
+    box-shadow: rgb(0 0 0 /50%) 0px 0px 18px 0px;
+    padding: 10px;
+    font-size: 14px;
+    letter-spacing: 2.5px;
+    width: 100px;
+    opacity: 0;
+`;
+
+const Signout = styled.div`
+    position: relative;
+    height: 48px;
+    width: 48px;
+    display: flex;
+    cursor: pointer;
+    align-items: center;
+    justify-contents: center;
+
+    ${UserImg}{
+        border-radius: 50%;
+        width: 100%;
+        height: 100%;
+    }
+
+    &:hover{
+        ${DropDown}{
+            opacity: 1;
+            transition-duration: 1s;
+        }
     }
 `;
 
