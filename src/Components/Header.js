@@ -54,7 +54,7 @@ const Header = (props) => {
     return (
         <Nav>
             <Logo>
-                <img src = "../Images/logo.svg" />
+                <img src = "/Images/logo.svg" />
             </Logo>
 
             {
